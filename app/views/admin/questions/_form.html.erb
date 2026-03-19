@@ -1,0 +1,50 @@
+<%= form_with model: [:admin, ag_session, question], data: { controller: "nested-form" } do |f| %>
+  <% if question.errors.any? %>
+    <div class="errors">
+      <% question.errors.full_messages.each do |msg| %><p><%= msg %></p><% end %>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :text, "Question" %>
+    <%= f.text_field :text, placeholder: "ex : Approbation du bilan financier ?", autofocus: true %>
+  </div>
+
+  <div class="field">
+    <%= f.label :position, "Ordre" %>
+    <%= f.number_field :position %>
+  </div>
+
+  <fieldset class="choices-fieldset">
+    <legend>Choix</legend>
+
+    <button type="button" class="btn btn-sm" data-action="nested-form#addDefaults">
+      Ajouter Pour / Contre / Abstention
+    </button>
+
+    <div id="choices" data-nested-form-target="container">
+      <%= f.fields_for :choices do |cf| %>
+        <%= render "admin/questions/choice_fields", cf: cf %>
+      <% end %>
+    </div>
+
+    <template data-nested-form-target="template">
+      <div class="choice-row" data-nested-form-target="row">
+        <input type="hidden" name="question[choices_attributes][NEW_RECORD][id]" value="">
+        <input type="hidden" name="question[choices_attributes][NEW_RECORD][_destroy]" value="false" data-nested-form-target="destroy">
+        <input type="text" name="question[choices_attributes][NEW_RECORD][text]" placeholder="Texte du choix">
+        <label class="checkbox-label">
+          <input type="checkbox" name="question[choices_attributes][NEW_RECORD][is_other]" value="1">
+          Champ libre (autre)
+        </label>
+        <button type="button" class="btn btn-sm btn-danger" data-action="nested-form#removeChoice">✕</button>
+      </div>
+    </template>
+
+    <button type="button" class="btn btn-sm" data-action="nested-form#addChoice">
+      + Ajouter un choix
+    </button>
+  </fieldset>
+
+  <%= f.submit question.new_record? ? "Créer" : "Mettre à jour", class: "btn btn-primary" %>
+<% end %>

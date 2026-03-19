@@ -1,0 +1,10 @@
+<div class="login-page">
+  <h1>Administration AG</h1>
+  <%= form_with url: admin_login_path do |f| %>
+    <div class="field">
+      <%= f.label :token, "Token d'accès" %>
+      <%= f.password_field :token, autofocus: true, placeholder: "Entrez le token admin" %>
+    </div>
+    <%= f.submit "Se connecter" %>
+  <% end %>
+</div>

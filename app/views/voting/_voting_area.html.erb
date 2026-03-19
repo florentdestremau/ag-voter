@@ -1,0 +1,22 @@
+<turbo-frame id="voting_area">
+  <% if @active_question %>
+    <% if @already_voted %>
+      <%= render "already_voted", question: @active_question %>
+    <% else %>
+      <%= render "active_question", question: @active_question %>
+    <% end %>
+  <% else %>
+    <div class="waiting-message">
+      <p>En attente du prochain vote...</p>
+    </div>
+  <% end %>
+
+  <% if @closed_questions&.any? %>
+    <section class="results-section">
+      <h2>Résultats des votes</h2>
+      <% @closed_questions.each do |question| %>
+        <%= render "closed_question_results", question: question %>
+      <% end %>
+    </section>
+  <% end %>
+</turbo-frame>

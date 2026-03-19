@@ -1,0 +1,45 @@
+<div class="question-item question-<%= question.status %>" id="question_<%= question.id %>">
+  <div class="question-header">
+    <span class="question-position">#<%= question.position %></span>
+    <strong class="question-text"><%= question.text %></strong>
+    <span class="badge badge-<%= question.status %>">
+      <%= { "pending" => "En attente", "active" => "En cours", "closed" => "Clôturée" }[question.status] %>
+    </span>
+  </div>
+
+  <ul class="choice-list">
+    <% question.choices.each do |choice| %>
+      <li class="<%= 'choice-other' if choice.is_other %>">
+        <%= choice.text %><% if choice.is_other %> <em>(champ libre)</em><% end %>
+      </li>
+    <% end %>
+  </ul>
+
+  <% if question.closed? %>
+    <div class="question-results-summary">
+      <%= question.total_votes %> vote<%= question.total_votes > 1 ? "s" : "" %>
+    </div>
+  <% end %>
+
+  <div class="question-actions">
+    <% if question.pending? && ag_session.questions.active.none? %>
+      <%= button_to "▶ Activer", activate_admin_ag_session_question_path(ag_session, question),
+            method: :patch, class: "btn btn-success" %>
+    <% elsif question.active? %>
+      <span class="live-count">
+        <%= question.total_votes %> / <%= ag_session.participants.count %> votes
+      </span>
+      <%= button_to "⏹ Clôturer", close_admin_ag_session_question_path(ag_session, question),
+            method: :patch, class: "btn btn-warning",
+            data: { turbo_confirm: "Clôturer le vote ? Les participants verront les résultats." } %>
+    <% end %>
+
+    <% unless question.active? %>
+      <%= link_to "Modifier", edit_admin_ag_session_question_path(ag_session, question), class: "btn btn-sm" %>
+      <%= button_to "Supprimer", admin_ag_session_question_path(ag_session, question),
+            method: :delete,
+            data: { turbo_confirm: "Supprimer cette question ?" },
+            class: "btn btn-sm btn-danger" %>
+    <% end %>
+  </div>
+</div>

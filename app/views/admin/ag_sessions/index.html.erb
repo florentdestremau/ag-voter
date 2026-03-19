@@ -1,0 +1,25 @@
+<div class="page-header">
+  <h1>Sessions AG</h1>
+  <%= link_to "Nouvelle session", new_admin_ag_session_path, class: "btn btn-primary" %>
+</div>
+
+<% if @ag_sessions.empty? %>
+  <p class="empty-state">Aucune session. Créez-en une pour commencer.</p>
+<% else %>
+  <div class="list">
+    <% @ag_sessions.each do |session| %>
+      <div class="list-item">
+        <div>
+          <strong><%= session.name %></strong>
+          <span class="badge badge-<%= session.status %>"><%= session.status %></span>
+        </div>
+        <div class="actions">
+          <%= link_to "Gérer", admin_ag_session_path(session), class: "btn btn-sm" %>
+          <%= button_to "Supprimer", admin_ag_session_path(session), method: :delete,
+                data: { turbo_confirm: "Supprimer cette session et toutes ses données ?" },
+                class: "btn btn-sm btn-danger" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

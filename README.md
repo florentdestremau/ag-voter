@@ -1,24 +1,53 @@
-# README
+# Votes AG
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Application Rails de vote en assemblée générale d'association.
 
-Things you may want to cover:
+## Comment ça fonctionne
 
-* Ruby version
+### Vue d'ensemble
 
-* System dependencies
+L'application repose sur deux interfaces distinctes : une interface **admin** pour piloter la session, et une interface **participant** accessible via un lien personnel unique.
 
-* Configuration
+### Côté admin
 
-* Database creation
+L'admin accède à `/admin` avec un token de connexion (variable d'environnement `ADMIN_TOKEN`, valeur par défaut `admin-secret`).
 
-* Database initialization
+Depuis le dashboard d'une session, l'admin :
 
-* How to run the test suite
+1. **Crée une session** AG avec un nom (ex : "AG 2026 - Association XYZ")
+2. **Ajoute les participants** présents (nom uniquement) — chaque participant reçoit automatiquement un lien de vote personnel à partager
+3. **Crée les questions** à soumettre au vote, avec leurs choix possibles. Un bouton "Pour / Contre / Abstention" pré-remplit les choix classiques. Chaque choix peut être marqué comme "champ libre" pour permettre une réponse texte
+4. **Active les questions une par une** — une seule question peut être active à la fois. L'admin voit en temps réel le nombre de votes reçus
+5. **Clôture le vote** — les résultats deviennent visibles pour tous les participants
 
-* Services (job queues, cache servers, search engines, etc.)
+### Côté participant
 
-* Deployment instructions
+Chaque participant accède à son lien personnel (`/vote/:session_token/:participant_token`), reçu par l'admin (par message, email, projection, etc.).
 
-* ...
+Sa page se rafraîchit automatiquement toutes les 3 secondes :
+
+- **En attente** → message "en attente du prochain vote"
+- **Question active** → formulaire de vote avec les choix proposés. Si un choix "autre" est sélectionné, un champ texte libre apparaît
+- **Vote enregistré** → confirmation, attente de la clôture
+- **Question clôturée** → résultats anonymes avec barres de progression et pourcentages. Les réponses libres sont listées sans attribution
+
+Les résultats sont **anonymes** : il est impossible de savoir qui a voté quoi.
+
+---
+
+## Lancer l'application
+
+```bash
+bundle install
+bin/rails db:setup    # crée la base et charge les seeds de démo
+bin/rails server
+```
+
+Admin : http://localhost:3000/admin/login
+Token par défaut : `admin-secret`
+
+Pour changer le token admin, définir la variable d'environnement `ADMIN_TOKEN`.
+
+## Seeds de démo
+
+`db/seeds.rb` crée une session avec 4 participants et 2 questions. Les liens de vote sont affichés dans la console au moment du seed.

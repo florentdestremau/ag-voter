@@ -1,0 +1,38 @@
+<div class="active-question" id="vote_form">
+  <h2 class="question-title"><%= question.text %></h2>
+
+  <%= form_with url: voting_submit_path(@ag_session.token, @participant.token),
+                data: { controller: "vote-form", turbo_frame: "_top" } do |f| %>
+
+    <% if defined?(@vote) && @vote&.errors&.any? %>
+      <div class="errors">
+        <% @vote.errors.full_messages.each do |msg| %><p><%= msg %></p><% end %>
+      </div>
+    <% end %>
+
+    <fieldset class="choices">
+      <% question.choices.each do |choice| %>
+        <label class="choice-label">
+          <%= radio_button_tag "vote[choice_id]", choice.id,
+                data: {
+                  action: "vote-form#toggleOther",
+                  "vote-form-is-other-value": choice.is_other.to_s
+                } %>
+          <%= choice.text %>
+          <% if choice.is_other %><em>(précisez ci-dessous)</em><% end %>
+        </label>
+      <% end %>
+    </fieldset>
+
+    <div class="other-text-field" style="display:none" data-vote-form-target="otherField">
+      <label>
+        Précisez :
+        <%= text_area_tag "vote[free_text]", nil,
+              placeholder: "Votre réponse...",
+              data: { "vote-form-target": "freeText" } %>
+      </label>
+    </div>
+
+    <%= submit_tag "Voter", class: "btn btn-primary btn-vote" %>
+  <% end %>
+</div>

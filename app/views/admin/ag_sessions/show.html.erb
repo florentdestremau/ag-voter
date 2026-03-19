@@ -1,0 +1,58 @@
+<div class="page-header">
+  <h1><%= @ag_session.name %></h1>
+  <span class="badge badge-<%= @ag_session.status %>"><%= @ag_session.status %></span>
+  <%= link_to "Modifier", edit_admin_ag_session_path(@ag_session), class: "btn btn-sm" %>
+  <% if @ag_session.pending? %>
+    <%= button_to "▶ Ouvrir la session", open_admin_ag_session_path(@ag_session), method: :patch, class: "btn btn-primary btn-sm" %>
+  <% elsif @ag_session.active? %>
+    <%= button_to "⏹ Clôturer la session", close_admin_ag_session_path(@ag_session), method: :patch, class: "btn btn-danger btn-sm" %>
+  <% end %>
+</div>
+
+<div class="ag-dashboard">
+
+  <%# ---- PARTICIPANTS ---- %>
+  <section class="dashboard-section">
+    <h2>Participants (<%= @participants.count %>)</h2>
+
+    <%= form_with model: [:admin, @ag_session, @new_participant], class: "inline-form" do |f| %>
+      <% if @new_participant.errors.any? %>
+        <div class="errors">
+          <% @new_participant.errors.full_messages.each do |msg| %><p><%= msg %></p><% end %>
+        </div>
+      <% end %>
+      <div class="field-inline">
+        <%= f.text_field :name, placeholder: "Nom du participant" %>
+        <%= f.submit "Ajouter", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+
+    <% if @participants.empty? %>
+      <p class="empty-state">Aucun participant.</p>
+    <% else %>
+      <ul class="participant-list" id="participants">
+        <% @participants.each do |participant| %>
+          <%= render "admin/participants/participant", participant: participant, ag_session: @ag_session %>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+
+  <%# ---- QUESTIONS ---- %>
+  <section class="dashboard-section">
+    <h2>Questions</h2>
+
+    <%= link_to "Nouvelle question", new_admin_ag_session_question_path(@ag_session), class: "btn btn-primary" %>
+
+    <% if @questions.empty? %>
+      <p class="empty-state">Aucune question.</p>
+    <% else %>
+      <div class="question-list" id="questions">
+        <% @questions.each do |question| %>
+          <%= render "admin/questions/question", question: question, ag_session: @ag_session %>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+
+</div>

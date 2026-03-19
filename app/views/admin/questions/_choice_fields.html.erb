@@ -1,0 +1,15 @@
+<div class="choice-row" data-nested-form-target="row">
+  <%= cf.hidden_field :id %>
+  <%= cf.hidden_field :_destroy, value: false, data: { nested_form_target: "destroy" } %>
+
+  <%= cf.text_field :text, placeholder: "Texte du choix" %>
+
+  <label class="checkbox-label">
+    <%= cf.check_box :is_other %>
+    Champ libre (autre)
+  </label>
+
+  <button type="button" class="btn btn-sm btn-danger" data-action="nested-form#removeChoice">
+    ✕
+  </button>
+</div>

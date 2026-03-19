@@ -1,0 +1,16 @@
+<%= form_with model: [:admin, ag_session] do |f| %>
+  <% if ag_session.errors.any? %>
+    <div class="errors">
+      <% ag_session.errors.full_messages.each do |msg| %>
+        <p><%= msg %></p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :name, "Nom de la session" %>
+    <%= f.text_field :name, placeholder: "ex : AG 2026 - Association XYZ", autofocus: true %>
+  </div>
+
+  <%= f.submit ag_session.new_record? ? "Créer la session" : "Mettre à jour", class: "btn btn-primary" %>
+<% end %>

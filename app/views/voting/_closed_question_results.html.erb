@@ -1,0 +1,28 @@
+<div class="question-results" id="question_results_<%= question.id %>">
+  <h3><%= question.text %></h3>
+  <p class="results-meta"><%= question.total_votes %> vote<%= question.total_votes != 1 ? "s" : "" %></p>
+
+  <div class="results-bars">
+    <% question.results.each do |result| %>
+      <div class="result-row">
+        <span class="result-label"><%= result[:choice].text %></span>
+        <div class="result-bar-wrap">
+          <div class="result-bar" style="width: <%= result[:percentage] %>%"></div>
+        </div>
+        <span class="result-count"><%= result[:count] %> (<%= result[:percentage] %>%)</span>
+      </div>
+    <% end %>
+  </div>
+
+  <% other_texts = question.other_free_texts %>
+  <% if other_texts.any? %>
+    <div class="other-responses">
+      <h4>Réponses libres :</h4>
+      <ul>
+        <% other_texts.each do |text| %>
+          <li><%= text %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</div>
