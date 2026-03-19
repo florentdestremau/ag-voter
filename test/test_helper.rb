@@ -13,3 +13,13 @@ module ActiveSupport
     # Add more helper methods to be used by all tests here...
   end
 end
+
+module AdminAuthHelper
+  def sign_in_admin
+    post admin_login_path, params: { token: ENV.fetch("ADMIN_TOKEN", "admin-secret") }
+  end
+end
+
+class ActionDispatch::IntegrationTest
+  include AdminAuthHelper
+end

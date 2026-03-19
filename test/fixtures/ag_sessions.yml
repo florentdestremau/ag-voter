@@ -1,0 +1,14 @@
+pending_session:
+  name: "AG Pending"
+  token: "pending-token-001"
+  status: "pending"
+
+active_session:
+  name: "AG Active"
+  token: "active-token-001"
+  status: "active"
+
+closed_session:
+  name: "AG Closed"
+  token: "closed-token-001"
+  status: "closed"

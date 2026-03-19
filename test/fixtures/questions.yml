@@ -1,0 +1,17 @@
+pending_question:
+  ag_session: active_session
+  text: "Question en attente"
+  status: "pending"
+  position: 1
+
+active_question:
+  ag_session: active_session
+  text: "Question active"
+  status: "active"
+  position: 2
+
+closed_question:
+  ag_session: active_session
+  text: "Question clôturée"
+  status: "closed"
+  position: 3

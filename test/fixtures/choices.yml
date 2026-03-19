@@ -1,0 +1,24 @@
+pour:
+  question: active_question
+  text: "Pour"
+  is_other: false
+
+contre:
+  question: active_question
+  text: "Contre"
+  is_other: false
+
+autre:
+  question: active_question
+  text: "Autre"
+  is_other: true
+
+closed_pour:
+  question: closed_question
+  text: "Pour"
+  is_other: false
+
+closed_contre:
+  question: closed_question
+  text: "Contre"
+  is_other: false

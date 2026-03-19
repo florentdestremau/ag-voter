@@ -1,0 +1,14 @@
+alice:
+  ag_session: active_session
+  name: "Alice"
+  token: "alice-token-001"
+
+bob:
+  ag_session: active_session
+  name: "Bob"
+  token: "bob-token-001"
+
+pending_participant:
+  ag_session: pending_session
+  name: "Charlie"
+  token: "charlie-token-001"

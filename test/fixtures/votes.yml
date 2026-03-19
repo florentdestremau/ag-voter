@@ -1,0 +1,5 @@
+alice_vote_closed:
+  participant: alice
+  question: closed_question
+  choice: closed_pour
+  free_text: ""
