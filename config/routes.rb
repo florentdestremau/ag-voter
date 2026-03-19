@@ -15,7 +15,9 @@ Rails.application.routes.draw do
         patch :open
         patch :close
       end
-      resources :participants, only: %i[create destroy]
+      resources :participants, only: %i[create destroy] do
+        member { patch :unclaim }
+      end
       resources :questions do
         member do
           patch :activate
@@ -24,6 +26,10 @@ Rails.application.routes.draw do
       end
     end
   end
+
+  # Identification page (shared link for the whole session)
+  get  "ag/:session_token",       to: "identification#show",  as: :identification
+  post "ag/:session_token/claim", to: "identification#claim", as: :identification_claim
 
   # Participant voting surface
   get  "vote/:session_token/:participant_token",        to: "voting#show",   as: :voting

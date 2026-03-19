@@ -278,3 +278,17 @@ main { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
 
 /* ===== INLINE FORM ===== */
 .inline-form { margin-bottom: 1rem; }
+
+/* ===== IDENTIFICATION PAGE ===== */
+.identification-page { max-width: 520px; margin: 2rem auto; padding: 0 1rem; }
+.identification-list { list-style: none; display: flex; flex-direction: column; gap: .5rem; margin-top: 1rem; }
+.identification-item { display: flex; align-items: center; justify-content: space-between; padding: .75rem 1rem; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; }
+.identification-item.claimed { background: #f9fafb; opacity: .6; }
+.identification-item .participant-name.taken { color: #9ca3af; }
+.btn-identification { width: 100%; text-align: left; font-size: 1rem; padding: .6rem 1rem; background: #fff; border: 1px solid #2563eb; color: #2563eb; border-radius: 6px; cursor: pointer; }
+.btn-identification:hover { background: #eff6ff; }
+
+/* ===== INVITATION LINK ===== */
+.invitation-hint { font-size: .875rem; color: #6b7280; margin-bottom: .5rem; }
+.copy-row { display: flex; align-items: center; gap: .75rem; }
+.copy-row code { font-size: .8rem; background: #f3f4f6; padding: .4rem .75rem; border-radius: 6px; word-break: break-all; }

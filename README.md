@@ -15,14 +15,17 @@ L'admin accède à `/admin` avec un token de connexion (variable d'environnement
 Depuis le dashboard d'une session, l'admin :
 
 1. **Crée une session** AG avec un nom (ex : "AG 2026 - Association XYZ")
-2. **Ajoute les participants** présents (nom uniquement) — chaque participant reçoit automatiquement un lien de vote personnel à partager
-3. **Crée les questions** à soumettre au vote, avec leurs choix possibles. Un bouton "Pour / Contre / Abstention" pré-remplit les choix classiques. Chaque choix peut être marqué comme "champ libre" pour permettre une réponse texte
-4. **Active les questions une par une** — une seule question peut être active à la fois. L'admin voit en temps réel le nombre de votes reçus
-5. **Clôture le vote** — les résultats deviennent visibles pour tous les participants
+2. **Ouvre la session** — un lien d'auto-identification devient actif, permettant aux participants de se déclarer eux-mêmes en début de séance
+3. **Ajoute les participants** présents (nom uniquement) — chaque participant reçoit automatiquement un lien de vote personnel à partager
+4. **Crée les questions** à soumettre au vote, avec leurs choix possibles. Un bouton "Pour / Contre / Abstention" pré-remplit les choix classiques. Chaque choix peut être marqué comme "champ libre" pour permettre une réponse texte
+5. **Active les questions une par une** — une seule question peut être active à la fois. L'admin voit en temps réel le nombre de votes reçus
+6. **Clôture le vote** — les résultats deviennent visibles pour tous les participants
 
 ### Côté participant
 
-Chaque participant accède à son lien personnel (`/vote/:session_token/:participant_token`), reçu par l'admin (par message, email, projection, etc.).
+À l'ouverture de la session, l'admin partage un **lien d'auto-identification** (`/ag/:session_token`). Chaque personne présente peut y réclamer son nom dans la liste des participants, ce qui lui génère son lien de vote personnel.
+
+Chaque participant accède ensuite à son lien personnel (`/vote/:session_token/:participant_token`).
 
 Sa page se rafraîchit automatiquement toutes les 3 secondes :
 

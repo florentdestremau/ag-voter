@@ -11,6 +11,16 @@
 
 <div class="ag-dashboard">
 
+  <%# ---- LIEN D'INVITATION ---- %>
+  <section class="dashboard-section">
+    <h2>Lien d'invitation</h2>
+    <p class="invitation-hint">Partagez ce lien pour que les participants s'identifient eux-mêmes :</p>
+    <div class="copy-row" data-controller="clipboard" data-clipboard-text-value="<%= identification_url(@ag_session.token) %>">
+      <code><%= identification_url(@ag_session.token) %></code>
+      <button class="btn btn-sm" data-action="clipboard#copy" data-clipboard-target="button">Copier</button>
+    </div>
+  </section>
+
   <%# ---- PARTICIPANTS ---- %>
   <section class="dashboard-section">
     <h2>Participants (<%= @participants.count %>)</h2>

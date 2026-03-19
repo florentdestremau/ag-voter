@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_18_233429) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_19_002521) do
   create_table "ag_sessions", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -32,6 +32,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_18_233429) do
 
   create_table "participants", force: :cascade do |t|
     t.integer "ag_session_id", null: false
+    t.datetime "claimed_at"
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.string "token", null: false

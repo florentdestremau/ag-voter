@@ -22,4 +22,15 @@ class ParticipantTest < ActiveSupport::TestCase
     alice = participants(:alice)
     assert_not alice.voted_on?(questions(:active_question))
   end
+
+  test "claimed? returns false by default" do
+    assert_not participants(:bob).claimed?
+  end
+
+  test "claim! sets claimed_at" do
+    bob = participants(:bob)
+    bob.claim!
+    assert bob.claimed?
+    assert_not_nil bob.claimed_at
+  end
 end

@@ -48,7 +48,9 @@ class VotingController < ApplicationController
     @participant = @ag_session.participants.find_by!(token: params[:participant_token])
     unless @ag_session.active?
       render plain: "Cette session n'est pas encore ouverte.", status: :forbidden
+      return
     end
+    @participant.claim! unless @participant.claimed?
   rescue ActiveRecord::RecordNotFound
     render plain: "Lien invalide.", status: :not_found
   end
