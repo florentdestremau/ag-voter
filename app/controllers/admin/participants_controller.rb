@@ -14,6 +14,12 @@ class Admin::ParticipantsController < Admin::BaseController
     end
   end
 
+  def unclaim
+    @participant = @ag_session.participants.find(params[:id])
+    @participant.update!(claimed_at: nil, token: SecureRandom.urlsafe_base64(12))
+    redirect_to admin_ag_session_path(@ag_session), notice: "#{@participant.name} peut s'identifier à nouveau."
+  end
+
   def destroy
     @participant = @ag_session.participants.find(params[:id])
     @participant.destroy

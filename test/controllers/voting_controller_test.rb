@@ -20,6 +20,21 @@ class VotingControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "show marks participant as claimed on first visit" do
+    bob = participants(:bob)
+    assert_not bob.claimed?
+    get voting_path_for(bob)
+    assert bob.reload.claimed?
+  end
+
+  test "show does not reset claimed_at on subsequent visits" do
+    alice = participants(:alice)
+    alice.claim!
+    claimed_at = alice.claimed_at
+    get voting_path_for(alice)
+    assert_equal claimed_at, alice.reload.claimed_at
+  end
+
   test "show is forbidden for pending session" do
     get voting_path_for(participants(:pending_participant))
     assert_response :forbidden

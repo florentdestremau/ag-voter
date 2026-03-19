@@ -1,10 +1,21 @@
 <li class="participant-item" id="participant_<%= participant.id %>">
-  <span class="participant-name"><%= participant.name %></span>
+  <span class="participant-name">
+    <%= participant.name %>
+    <% if participant.claimed? %>
+      <span class="badge badge-active" title="Identifié le <%= l(participant.claimed_at, format: :short) %>">✓ présent</span>
+    <% end %>
+  </span>
   <div class="participant-actions">
     <span class="vote-link" data-controller="clipboard" data-clipboard-text-value="<%= voting_url(ag_session.token, participant.token) %>">
       <code class="vote-url"><%= voting_url(ag_session.token, participant.token) %></code>
       <button class="btn btn-sm" data-action="clipboard#copy" data-clipboard-target="button">Copier</button>
     </span>
+    <% if participant.claimed? %>
+      <%= button_to "Réinitialiser", unclaim_admin_ag_session_participant_path(ag_session, participant),
+            method: :patch,
+            data: { turbo_confirm: "Réinitialiser la présence de #{participant.name} ? Son lien actuel sera invalide." },
+            class: "btn btn-sm btn-warning" %>
+    <% end %>
     <%= button_to "Retirer", admin_ag_session_participant_path(ag_session, participant),
           method: :delete,
           data: { turbo_confirm: "Retirer #{participant.name} ?" },

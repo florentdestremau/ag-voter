@@ -14,7 +14,8 @@ export default class extends Controller {
   scheduleRefresh() {
     this.timer = setTimeout(() => {
       const hasSelection = this.element.querySelector('input[type="radio"]:checked')
-      if (!hasSelection) {
+      const hasFocus = this.element.querySelector('input[type="text"]:focus, textarea:focus')
+      if (!hasSelection && !hasFocus) {
         this.element.reload()
       }
       this.scheduleRefresh()

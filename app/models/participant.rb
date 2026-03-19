@@ -11,6 +11,14 @@ class Participant < ApplicationRecord
     votes.exists?(question_id: question.id)
   end
 
+  def claimed?
+    claimed_at.present?
+  end
+
+  def claim!
+    update!(claimed_at: Time.current)
+  end
+
   private
 
   def generate_token

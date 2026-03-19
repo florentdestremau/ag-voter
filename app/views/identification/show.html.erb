@@ -1,0 +1,30 @@
+<div class="identification-page">
+  <header class="voting-header">
+    <h1><%= @ag_session.name %></h1>
+    <p>Identifiez-vous pour participer au vote.</p>
+  </header>
+
+  <% if flash[:alert] %>
+    <div class="flash flash-alert"><%= flash[:alert] %></div>
+  <% end %>
+
+  <section class="participant-list-identification">
+    <h2>Qui êtes-vous ?</h2>
+
+    <ul class="identification-list">
+      <% @participants.each do |participant| %>
+        <li class="identification-item <%= 'claimed' if participant.claimed? %>">
+          <% if participant.claimed? %>
+            <span class="participant-name taken"><%= participant.name %></span>
+            <span class="badge badge-closed">Déjà présent</span>
+          <% else %>
+            <%= button_to participant.name,
+                          identification_claim_path(@ag_session.token),
+                          params: { participant_id: participant.id },
+                          class: "btn btn-identification" %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+</div>
