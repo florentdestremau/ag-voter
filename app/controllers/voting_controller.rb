@@ -7,22 +7,15 @@ class VotingController < ApplicationController
     @already_voted = @active_question && @participant.voted_on?(@active_question)
   end
 
-  def area
-    @active_question = @ag_session.active_question
-    @already_voted = @active_question && @participant.voted_on?(@active_question)
-    @closed_questions = @ag_session.questions.closed.order(:position)
-    render partial: "voting_area"
-  end
-
   def create
     @active_question = @ag_session.active_question
 
     unless @active_question
-      return redirect_to voting_area_path(@ag_session.token, @participant.token)
+      return redirect_to voting_path(@ag_session.token, @participant.token)
     end
 
     if @participant.voted_on?(@active_question)
-      return redirect_to voting_area_path(@ag_session.token, @participant.token)
+      return redirect_to voting_path(@ag_session.token, @participant.token)
     end
 
     @vote = Vote.new(
@@ -33,6 +26,7 @@ class VotingController < ApplicationController
     )
 
     if @vote.save
+      broadcast_vote_count
       redirect_to voting_path(@ag_session.token, @participant.token)
     else
       @already_voted = false
@@ -42,6 +36,15 @@ class VotingController < ApplicationController
   end
 
   private
+
+  def broadcast_vote_count
+    Turbo::StreamsChannel.broadcast_replace_to(
+      "admin_session_#{@ag_session.id}",
+      target: "question_#{@active_question.id}_vote_count",
+      partial: "admin/questions/vote_count",
+      locals: { question: @active_question }
+    )
+  end
 
   def find_participant_and_session
     @ag_session = AgSession.find_by!(token: params[:session_token])

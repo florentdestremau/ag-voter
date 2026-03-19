@@ -1,7 +1,10 @@
+<% session = local_assigns.fetch(:session, @ag_session) %>
+<% participant = local_assigns.fetch(:participant, @participant) %>
+
 <div class="active-question" id="vote_form">
   <h2 class="question-title"><%= question.text %></h2>
 
-  <%= form_with url: voting_submit_path(@ag_session.token, @participant.token),
+  <%= form_with url: voting_submit_path(session.token, participant.token),
                 data: { controller: "vote-form", turbo_frame: "_top" } do |f| %>
 
     <% if defined?(@vote) && @vote&.errors&.any? %>

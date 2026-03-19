@@ -34,7 +34,6 @@ Rails.application.routes.draw do
   # Participant voting surface
   get  "vote/:session_token/:participant_token",        to: "voting#show",   as: :voting
   post "vote/:session_token/:participant_token",        to: "voting#create", as: :voting_submit
-  get  "vote/:session_token/:participant_token/area",   to: "voting#area",   as: :voting_area
 
   root to: "admin/sessions#new"
 end

@@ -27,7 +27,7 @@
             method: :patch, class: "btn btn-success" %>
     <% elsif question.active? %>
       <span class="live-count">
-        <%= question.total_votes %> / <%= ag_session.participants.count %> votes
+        <span id="question_<%= question.id %>_vote_count"><%= render "admin/questions/vote_count", question: question %></span> / <%= ag_session.participants.count %> votes
       </span>
       <%= button_to "⏹ Clôturer", close_admin_ag_session_question_path(ag_session, question),
             method: :patch, class: "btn btn-warning",

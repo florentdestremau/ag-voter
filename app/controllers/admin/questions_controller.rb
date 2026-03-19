@@ -35,11 +35,13 @@ class Admin::QuestionsController < Admin::BaseController
   def activate
     @ag_session.questions.active.each(&:closed!)
     @question.active!
+    broadcast_voting_area
     redirect_to admin_ag_session_path(@ag_session), notice: "Question activée."
   end
 
   def close
     @question.closed!
+    broadcast_voting_area
     redirect_to admin_ag_session_path(@ag_session), notice: "Vote clôturé."
   end
 
@@ -55,5 +57,19 @@ class Admin::QuestionsController < Admin::BaseController
 
   def question_params
     params.expect(question: [ :text, :position, choices_attributes: [ %i[id text is_other _destroy] ] ])
+  end
+
+  def broadcast_voting_area
+    active_question = @ag_session.active_question
+    closed_questions = @ag_session.questions.closed.order(:position)
+    @ag_session.participants.each do |participant|
+      already_voted = active_question && participant.voted_on?(active_question)
+      Turbo::StreamsChannel.broadcast_replace_to(
+        "voting_#{participant.token}",
+        target: "voting_area",
+        partial: "voting/voting_area",
+        locals: { active_question:, already_voted:, closed_questions:, session: @ag_session, participant: }
+      )
+    end
   end
 end

@@ -1,3 +1,5 @@
+<%= turbo_stream_from "admin_session_#{@ag_session.id}" %>
+
 <div class="page-header">
   <h1><%= @ag_session.name %></h1>
   <span class="badge badge-<%= @ag_session.status %>"><%= @ag_session.status %></span>

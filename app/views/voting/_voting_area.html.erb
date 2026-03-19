@@ -1,9 +1,15 @@
+<% active_question = local_assigns.fetch(:active_question, @active_question) %>
+<% already_voted = local_assigns.key?(:already_voted) ? local_assigns[:already_voted] : @already_voted %>
+<% closed_questions = local_assigns.fetch(:closed_questions, @closed_questions) %>
+<% session = local_assigns.fetch(:session, @ag_session) %>
+<% participant = local_assigns.fetch(:participant, @participant) %>
+
 <turbo-frame id="voting_area">
-  <% if @active_question %>
-    <% if @already_voted %>
-      <%= render "already_voted", question: @active_question %>
+  <% if active_question %>
+    <% if already_voted %>
+      <%= render "voting/already_voted", question: active_question, session: session, participant: participant %>
     <% else %>
-      <%= render "active_question", question: @active_question %>
+      <%= render "voting/active_question", question: active_question, session: session, participant: participant %>
     <% end %>
   <% else %>
     <div class="waiting-message">
@@ -11,11 +17,11 @@
     </div>
   <% end %>
 
-  <% if @closed_questions&.any? %>
+  <% if closed_questions&.any? %>
     <section class="results-section">
       <h2>Résultats des votes</h2>
-      <% @closed_questions.each do |question| %>
-        <%= render "closed_question_results", question: question %>
+      <% closed_questions.each do |question| %>
+        <%= render "voting/closed_question_results", question: question %>
       <% end %>
     </section>
   <% end %>

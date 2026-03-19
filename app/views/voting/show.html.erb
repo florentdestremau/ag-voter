@@ -1,14 +1,10 @@
+<%= turbo_stream_from "voting_#{@participant.token}" %>
+
 <div class="voting-page">
   <header class="voting-header">
     <h1><%= @ag_session.name %></h1>
     <p class="participant-greeting">Bonjour, <strong><%= @participant.name %></strong></p>
   </header>
 
-  <turbo-frame id="voting_area"
-               src="<%= voting_area_path(@ag_session.token, @participant.token) %>"
-               data-controller="auto-refresh"
-               data-auto-refresh-interval-value="3000">
-    <div class="waiting-message"><p>Chargement...</p></div>
-  </turbo-frame>
-
+  <%= render "voting_area" %>
 </div>
