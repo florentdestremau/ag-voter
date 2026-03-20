@@ -166,6 +166,127 @@
     color: #7f8c8d;
     font-size: 0.85rem;
   }
+
+  @media (max-width: 768px) {
+    .waiting-room-content {
+      max-width: 95%;
+      padding: 1rem;
+    }
+
+    .waiting-room-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .waiting-room-content h2 {
+      font-size: 1.2rem;
+      margin: 0.5rem 0;
+    }
+
+    .game-info {
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .game-board {
+      width: 240px;
+      height: 240px;
+      padding: 4px;
+      grid-gap: 4px;
+    }
+
+    .game-tile {
+      min-width: 52px;
+      min-height: 52px;
+      font-size: 1.8rem;
+    }
+
+    .game-tile[data-value="128"],
+    .game-tile[data-value="256"],
+    .game-tile[data-value="512"] {
+      font-size: 1.4rem;
+    }
+
+    .game-tile[data-value="1024"],
+    .game-tile[data-value="2048"],
+    .game-tile[data-value="4096"] {
+      font-size: 1.1rem;
+    }
+
+    .game-button {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.9rem;
+    }
+
+    .game-instructions {
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .waiting-room-content {
+      max-width: 98%;
+      padding: 0.8rem;
+    }
+
+    .waiting-room-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .waiting-room-content h2 {
+      font-size: 1rem;
+      margin: 0.25rem 0;
+    }
+
+    .waiting-room-message,
+    .waiting-room-status {
+      font-size: 0.9rem;
+      margin: 0.5rem 0;
+    }
+
+    .game-info {
+      padding: 0.25rem;
+      gap: 0.25rem;
+    }
+
+    .score-container {
+      gap: 0.25rem;
+      font-size: 0.9rem;
+    }
+
+    .game-board {
+      width: 200px;
+      height: 200px;
+      padding: 3px;
+      grid-gap: 3px;
+    }
+
+    .game-tile {
+      min-width: 44px;
+      min-height: 44px;
+      font-size: 1.4rem;
+    }
+
+    .game-tile[data-value="128"],
+    .game-tile[data-value="256"],
+    .game-tile[data-value="512"] {
+      font-size: 1.1rem;
+    }
+
+    .game-tile[data-value="1024"],
+    .game-tile[data-value="2048"],
+    .game-tile[data-value="4096"] {
+      font-size: 0.9rem;
+    }
+
+    .game-button {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+    }
+  }
 </style>
 
 <script>
