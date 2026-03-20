@@ -18,7 +18,17 @@
         <button id="game-reset" class="game-button">Nouveau jeu</button>
       </div>
       <div id="game-board" class="game-board"></div>
-      <p class="game-instructions">
+
+      <div id="game-controls" class="game-controls hidden-on-desktop">
+        <button class="arrow-button arrow-up" data-direction="up">▲</button>
+        <div class="arrow-row">
+          <button class="arrow-button arrow-left" data-direction="left">◀</button>
+          <button class="arrow-button arrow-down" data-direction="down">▼</button>
+          <button class="arrow-button arrow-right" data-direction="right">▶</button>
+        </div>
+      </div>
+
+      <p class="game-instructions" id="game-instructions-text">
         Utilisez les flèches du clavier pour déplacer les tuiles
       </p>
     </div>
@@ -167,6 +177,48 @@
     font-size: 0.85rem;
   }
 
+  .game-controls {
+    display: none;
+    margin-top: 1.5rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .game-controls.visible {
+    display: flex;
+  }
+
+  .arrow-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .arrow-button {
+    width: 50px;
+    height: 50px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s, transform 0.1s;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .arrow-button:active {
+    background: #2980b9;
+    transform: scale(0.95);
+  }
+
+  .hidden-on-desktop {
+    display: none;
+  }
+
   @media (max-width: 768px) {
     .waiting-room-content {
       max-width: 95%;
@@ -222,6 +274,20 @@
     .game-instructions {
       font-size: 0.75rem;
       margin-top: 0.5rem;
+    }
+
+    .hidden-on-desktop {
+      display: flex !important;
+    }
+
+    #game-instructions-text {
+      display: none;
+    }
+
+    .arrow-button {
+      width: 45px;
+      height: 45px;
+      font-size: 1.2rem;
     }
   }
 
@@ -436,6 +502,14 @@
       });
 
       this.resetButton.addEventListener('click', () => this.init());
+
+      const arrowButtons = document.querySelectorAll('.arrow-button');
+      arrowButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const direction = button.getAttribute('data-direction');
+          this.move(direction);
+        });
+      });
     }
   }
 
