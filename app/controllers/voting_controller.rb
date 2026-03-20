@@ -8,6 +8,10 @@ class VotingController < ApplicationController
   end
 
   def create
+    unless @ag_session.active?
+      return render plain: "Cette session n'est pas encore ouverte.", status: :forbidden
+    end
+
     @active_question = @ag_session.active_question
 
     unless @active_question

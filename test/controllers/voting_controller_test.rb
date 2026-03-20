@@ -5,10 +5,6 @@ class VotingControllerTest < ActionDispatch::IntegrationTest
     voting_path(participant.ag_session.token, participant.token)
   end
 
-  def area_path_for(participant)
-    voting_area_path(participant.ag_session.token, participant.token)
-  end
-
   def submit_path_for(participant)
     voting_submit_path(participant.ag_session.token, participant.token)
   end
@@ -35,35 +31,15 @@ class VotingControllerTest < ActionDispatch::IntegrationTest
     assert_equal claimed_at, alice.reload.claimed_at
   end
 
-  test "show is forbidden for pending session" do
+  test "show displays waiting room for pending session" do
     get voting_path_for(participants(:pending_participant))
-    assert_response :forbidden
+    assert_response :success
+    assert_match "Salle d'attente", response.body
   end
 
   test "show returns 404 for invalid token" do
     get voting_path("bad-session", "bad-participant")
     assert_response :not_found
-  end
-
-  # ---- Area (polling endpoint) ----
-
-  test "area renders the partial for active session" do
-    get area_path_for(participants(:alice))
-    assert_response :success
-  end
-
-  test "area shows active question when one exists" do
-    get area_path_for(participants(:alice))
-    assert_response :success
-    assert_match questions(:active_question).text, response.body
-  end
-
-  test "area shows already voted message after voting" do
-    alice = participants(:alice)
-    # alice has already voted on closed_question; let's vote on active_question
-    Vote.create!(participant: alice, question: questions(:active_question), choice: choices(:pour))
-    get area_path_for(alice)
-    assert_response :success
   end
 
   # ---- Create (vote submission) ----
@@ -107,11 +83,11 @@ class VotingControllerTest < ActionDispatch::IntegrationTest
     ag.questions.active.each(&:closed!)
     bob = participants(:bob)
     post submit_path_for(bob), params: { vote: { choice_id: choices(:pour).id } }
-    assert_redirected_to area_path_for(bob)
+    assert_redirected_to voting_path_for(bob)
   end
 
   test "create is forbidden for pending session" do
-    post voting_submit_path(ag_sessions(:pending_session).token, participants(:pending_participant).token),
+    post submit_path_for(participants(:pending_participant)),
          params: { vote: { choice_id: choices(:pour).id } }
     assert_response :forbidden
   end
