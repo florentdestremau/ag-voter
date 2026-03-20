@@ -37,6 +37,7 @@ class Admin::AgSessionsController < Admin::BaseController
 
   def open
     @ag_session.update!(status: :active)
+    broadcast_session_started
     redirect_to admin_ag_session_path(@ag_session), notice: "Session ouverte."
   end
 
@@ -58,5 +59,22 @@ class Admin::AgSessionsController < Admin::BaseController
 
   def ag_session_params
     params.expect(ag_session: [ :name ])
+  end
+
+  def broadcast_session_started
+    @ag_session.participants.each do |participant|
+      Turbo::StreamsChannel.broadcast_replace_to(
+        "session_status_#{@ag_session.id}",
+        target: "waiting_room",
+        partial: "voting/voting_area",
+        locals: {
+          active_question: @ag_session.active_question,
+          already_voted: false,
+          closed_questions: @ag_session.questions.closed.order(:position),
+          session: @ag_session,
+          participant: participant
+        }
+      )
+    end
   end
 end

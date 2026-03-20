@@ -1,10 +1,14 @@
-<%= turbo_stream_from "voting_#{@participant.token}" %>
-
 <div class="voting-page">
   <header class="voting-header">
     <h1><%= @ag_session.name %></h1>
     <p class="participant-greeting">Bonjour, <strong><%= @participant.name %></strong></p>
   </header>
 
-  <%= render "voting_area" %>
+  <% if @ag_session.active? %>
+    <%= turbo_stream_from "voting_#{@participant.token}" %>
+    <%= render "voting_area" %>
+  <% else %>
+    <%= turbo_stream_from "session_status_#{@ag_session.id}" %>
+    <%= render "waiting_room" %>
+  <% end %>
 </div>

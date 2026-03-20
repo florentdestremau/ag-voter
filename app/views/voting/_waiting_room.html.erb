@@ -1,0 +1,83 @@
+<div class="waiting-room" id="waiting_room">
+  <div class="waiting-room-content">
+    <div class="waiting-room-icon">⏳</div>
+    <h2>Salle d'attente</h2>
+    <p class="waiting-room-message">
+      La session <strong><%= @ag_session.name %></strong> n'a pas encore commencé.
+    </p>
+    <p class="waiting-room-status">
+      L'administrateur vous confirmera quand le vote commencera.
+    </p>
+    <div class="waiting-room-loader">
+      <div class="spinner"></div>
+      <p>En attente du démarrage de la session...</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .waiting-room {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+  }
+
+  .waiting-room-content {
+    padding: 2rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .waiting-room-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: bounce 1s infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .waiting-room-content h2 {
+    margin: 1rem 0;
+    color: #2c3e50;
+    font-size: 1.5rem;
+  }
+
+  .waiting-room-message {
+    margin: 1rem 0;
+    color: #34495e;
+    font-size: 1rem;
+  }
+
+  .waiting-room-status {
+    margin: 1rem 0;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+
+  .waiting-room-loader {
+    margin-top: 2rem;
+  }
+
+  .spinner {
+    border: 4px solid #ecf0f1;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
