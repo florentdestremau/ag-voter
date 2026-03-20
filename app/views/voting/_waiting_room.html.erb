@@ -408,6 +408,33 @@
         }
       });
 
+      let touchStartX = 0;
+      let touchStartY = 0;
+
+      this.boardElement.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+      });
+
+      this.boardElement.addEventListener('touchend', (e) => {
+        const touch = e.changedTouches[0];
+        const touchEndX = touch.clientX;
+        const touchEndY = touch.clientY;
+
+        const dx = touchEndX - touchStartX;
+        const dy = touchEndY - touchStartY;
+        const threshold = 30;
+
+        if (Math.abs(dx) > threshold && Math.abs(dy) < threshold) {
+          e.preventDefault();
+          this.move(dx > 0 ? 'right' : 'left');
+        } else if (Math.abs(dy) > threshold && Math.abs(dx) < threshold) {
+          e.preventDefault();
+          this.move(dy > 0 ? 'down' : 'up');
+        }
+      });
+
       this.resetButton.addEventListener('click', () => this.init());
     }
   }
