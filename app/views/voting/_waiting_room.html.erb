@@ -6,11 +6,21 @@
       La session <strong><%= @ag_session.name %></strong> n'a pas encore commencé.
     </p>
     <p class="waiting-room-status">
-      L'administrateur vous confirmera quand le vote commencera.
+      Jouez à 2048 en attendant le démarrage...
     </p>
-    <div class="waiting-room-loader">
-      <div class="spinner"></div>
-      <p>En attente du démarrage de la session...</p>
+
+    <div class="game-container">
+      <div class="game-info">
+        <div class="score-container">
+          <span>Score:</span>
+          <span id="score">0</span>
+        </div>
+        <button id="game-reset" class="game-button">Nouveau jeu</button>
+      </div>
+      <div id="game-board" class="game-board"></div>
+      <p class="game-instructions">
+        Utilisez les flèches du clavier pour déplacer les tuiles
+      </p>
     </div>
   </div>
 </div>
@@ -28,7 +38,7 @@
     padding: 2rem;
     border-radius: 12px;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    max-width: 400px;
+    max-width: 500px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   }
 
@@ -62,22 +72,227 @@
     font-style: italic;
   }
 
-  .waiting-room-loader {
-    margin-top: 2rem;
+  .game-container {
+    margin-top: 1.5rem;
+    text-align: center;
   }
 
-  .spinner {
-    border: 4px solid #ecf0f1;
-    border-top: 4px solid #3498db;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 1rem;
+  .game-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
   }
 
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  .score-container {
+    display: flex;
+    gap: 0.5rem;
+    font-weight: bold;
+    color: #2c3e50;
+  }
+
+  .game-button {
+    padding: 0.5rem 1rem;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+  }
+
+  .game-button:hover {
+    background: #2980b9;
+  }
+
+  .game-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 6px;
+    background: #bbada0;
+    border-radius: 6px;
+    padding: 6px;
+    width: 280px;
+    height: 280px;
+    margin: 0 auto;
+  }
+
+  .game-tile {
+    background: #cdc1b4;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 2.5rem;
+    color: #776e65;
+    transition: all 0.15s ease-in-out;
+    position: relative;
+  }
+
+  .game-tile.new {
+    animation: pop 0.2s;
+  }
+
+  .game-tile[data-value="2"] { background: #eee4da; color: #776e65; }
+  .game-tile[data-value="4"] { background: #ede0c8; color: #776e65; }
+  .game-tile[data-value="8"] { background: #f2b179; color: #f9f6f2; }
+  .game-tile[data-value="16"] { background: #f59563; color: #f9f6f2; }
+  .game-tile[data-value="32"] { background: #f67c5f; color: #f9f6f2; }
+  .game-tile[data-value="64"] { background: #f65e3b; color: #f9f6f2; }
+  .game-tile[data-value="128"] { background: #edcf72; color: #095f6b; font-size: 2rem; }
+  .game-tile[data-value="256"] { background: #edcc61; color: #095f6b; font-size: 2rem; }
+  .game-tile[data-value="512"] { background: #edc850; color: #095f6b; font-size: 2rem; }
+  .game-tile[data-value="1024"] { background: #edc53f; color: #095f6b; font-size: 1.5rem; }
+  .game-tile[data-value="2048"] { background: #edc22e; color: #095f6b; font-size: 1.5rem; }
+  .game-tile[data-value="4096"] { background: #3c3322; color: #f9f6f2; font-size: 1.5rem; }
+
+  @keyframes pop {
+    0% { transform: scale(0.5); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  .game-instructions {
+    margin-top: 1rem;
+    color: #7f8c8d;
+    font-size: 0.85rem;
   }
 </style>
+
+<script>
+  class Game2048 {
+    constructor(boardElement, scoreElement, resetButton) {
+      this.boardElement = boardElement;
+      this.scoreElement = scoreElement;
+      this.resetButton = resetButton;
+      this.grid = [];
+      this.score = 0;
+
+      this.init();
+      this.bindEvents();
+    }
+
+    init() {
+      this.grid = Array(4).fill(null).map(() => Array(4).fill(0));
+      this.score = 0;
+      this.addNewTile();
+      this.addNewTile();
+      this.render();
+    }
+
+    addNewTile() {
+      const empty = [];
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+          if (this.grid[i][j] === 0) empty.push({x: i, y: j});
+        }
+      }
+      if (empty.length > 0) {
+        const pos = empty[Math.floor(Math.random() * empty.length)];
+        this.grid[pos.x][pos.y] = Math.random() < 0.9 ? 2 : 4;
+      }
+    }
+
+    move(direction) {
+      let moved = false;
+      const original = this.grid.map(r => [...r]);
+
+      if (direction === 'left' || direction === 'right') {
+        for (let i = 0; i < 4; i++) {
+          this.grid[i] = this.moveLine(this.grid[i], direction === 'right');
+        }
+      } else {
+        for (let j = 0; j < 4; j++) {
+          const col = [this.grid[0][j], this.grid[1][j], this.grid[2][j], this.grid[3][j]];
+          const moved_col = this.moveLine(col, direction === 'down');
+          for (let i = 0; i < 4; i++) {
+            this.grid[i][j] = moved_col[i];
+          }
+        }
+      }
+
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+          if (original[i][j] !== this.grid[i][j]) {
+            moved = true;
+            break;
+          }
+        }
+      }
+
+      if (moved) {
+        this.addNewTile();
+        this.render();
+      }
+    }
+
+    moveLine(line, reverse) {
+      if (reverse) line = line.reverse();
+
+      line = line.filter(val => val !== 0);
+
+      for (let i = 0; i < line.length - 1; i++) {
+        if (line[i] === line[i + 1]) {
+          line[i] *= 2;
+          this.score += line[i];
+          line.splice(i + 1, 1);
+        }
+      }
+
+      while (line.length < 4) line.push(0);
+
+      if (reverse) line = line.reverse();
+      return line;
+    }
+
+    render() {
+      this.boardElement.innerHTML = '';
+      for (let i = 0; i < 4; i++) {
+        for (let j = 0; j < 4; j++) {
+          const value = this.grid[i][j];
+          const tile = document.createElement('div');
+          tile.className = 'game-tile';
+          if (value > 0) {
+            tile.setAttribute('data-value', value);
+            tile.textContent = value;
+            tile.classList.add('new');
+          }
+          this.boardElement.appendChild(tile);
+        }
+      }
+      this.scoreElement.textContent = this.score;
+    }
+
+    bindEvents() {
+      document.addEventListener('keydown', (e) => {
+        const keys = {
+          'ArrowLeft': 'left',
+          'ArrowRight': 'right',
+          'ArrowUp': 'up',
+          'ArrowDown': 'down'
+        };
+        if (keys[e.key]) {
+          e.preventDefault();
+          this.move(keys[e.key]);
+        }
+      });
+
+      this.resetButton.addEventListener('click', () => this.init());
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const boardElement = document.getElementById('game-board');
+    const scoreElement = document.getElementById('score');
+    const resetButton = document.getElementById('game-reset');
+
+    if (boardElement && scoreElement && resetButton) {
+      new Game2048(boardElement, scoreElement, resetButton);
+    }
+  });
+</script>
