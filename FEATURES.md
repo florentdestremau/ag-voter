@@ -1,72 +1,126 @@
 # AG-Voter - Features Documentation
 
-Une application de vote en temps réel avec gestion participative et jeu 2048 en salle d'attente.
+Une application de vote en temps réel avec gestion participative.
+
+**Note:** Ce document est framework-agnostique. Peut être implémenté en Rails, Symfony, Django, FastAPI, etc.
 
 ## Vue d'ensemble
 
-AG-Voter est une application Rails 8 permettant à un administrateur de créer des sessions de vote, de poser des questions avec des choix de réponse, et aux participants de voter en temps réel. Les résultats sont affichés instantanément à l'administrateur via Turbo Streams (WebSocket).
+AG-Voter est une application permettant à un administrateur de créer des sessions de vote, de poser des questions avec des choix de réponse, et aux participants de voter en temps réel. Les résultats sont affichés instantanément à l'administrateur via WebSocket.
 
 ## Architecture générale
 
-- **Frontend:** Rails 8 + Hotwire (Turbo + Stimulus)
-- **Backend:** Rails 8 + SQLite3
-- **Temps réel:** Action Cable + Turbo Streams
-- **Authentification Admin:** Session simple avec mot de passe
-- **Identification Participants:** Tokens URL uniques par participant
+- **Frontend:** HTML/CSS/JavaScript
+- **Backend:** API REST/GraphQL avec WebSocket
+- **Persistence:** SQL Database (SQLite, PostgreSQL, MySQL)
+- **Temps réel:** WebSocket (Server-Sent Events alternatif)
+- **Authentification Admin:** Session HTTP + mot de passe
+- **Identification Participants:** Tokens URL uniques par participant (JWT ou simple token)
 
-## Modèles de données
+## Modèle de données
 
-### AgSession
-- **Statuts:** `pending`, `active`, `closed`
-- **Attributes:** `name`, `token` (généré automatiquement)
-- **Relations:**
-  - `has_many :participants` (avec `dependent: :destroy`)
-  - `has_many :questions` (ordonnées par position, avec `dependent: :destroy`)
-- **Méthodes:**
-  - `active_question` - retourne la question actuellement active
-  - `active?` - booléen si le statut est actif
+### Entités
 
-### Question
-- **Statuts:** `pending`, `active`, `closed`
-- **Attributes:** `text`, `position`, `status`, `ag_session_id`
-- **Relations:**
-  - `belongs_to :ag_session`
-  - `has_many :choices` (ordonnées par id, avec `dependent: :destroy`)
-  - `has_many :votes` (avec `dependent: :destroy`)
-- **Méthodes:**
-  - `total_votes` - nombre total de votes sur cette question
-  - `results` - tableau avec résultats par choix (count, pourcentage)
-  - `other_free_texts` - textes libres saisis pour le choix "autre"
-- **Features:**
-  - `accepts_nested_attributes_for :choices` (rejet des blancs, destruction autorisée)
+#### AgSession
+| Champ | Type | Spec |
+|-------|------|------|
+| id | UUID/Int | Primary key |
+| name | String | Nom de la session (requis) |
+| token | String | URL token unique (généré automatiquement, ex: SecureRandom 16 chars) |
+| status | Enum | `pending`, `active`, `closed` |
+| created_at | DateTime | Timestamp création |
+| updated_at | DateTime | Timestamp modification |
 
-### Choice
-- **Attributes:** `text`, `is_other` (booléen), `question_id`
-- **Relations:** `belongs_to :question`
-- **Scopes:**
-  - `regular` - choix normaux (`is_other: false`)
-  - `other` - choix "autre" (`is_other: true`)
+**Relations:**
+- OneToMany: Participants (cascade delete)
+- OneToMany: Questions (cascade delete, ordonnées par position)
 
-### Participant
-- **Attributes:** `name`, `token` (généré automatiquement), `claimed_at`, `ag_session_id`
-- **Relations:**
-  - `belongs_to :ag_session`
-  - `has_many :votes` (avec `dependent: :destroy`)
-- **Méthodes:**
-  - `voted_on?(question)` - booléen si le participant a voté sur cette question
-  - `claimed?` - booléen si le participant s'est identifié
-  - `claim!` - enregistre l'identification (timestamp `claimed_at`)
+**Méthodes:**
+- `get_active_question()` → Question active ou null
+- `is_active()` → booléen
 
-### Vote
-- **Attributes:** `free_text`, `participant_id`, `question_id`, `choice_id`
-- **Relations:**
-  - `belongs_to :participant`
-  - `belongs_to :question`
-  - `belongs_to :choice`
-- **Validations:**
-  - `participant_id` unique par `question_id` (un vote par question)
-  - `free_text` requis si le choix est "autre"
-  - Validation custom: le choix doit appartenir à la question
+#### Question
+| Champ | Type | Spec |
+|-------|------|------|
+| id | UUID/Int | Primary key |
+| ag_session_id | FK | Foreign key vers AgSession |
+| text | String | Texte de la question (requis) |
+| position | Int | Ordre d'affichage |
+| status | Enum | `pending`, `active`, `closed` |
+| created_at | DateTime | Timestamp création |
+| updated_at | DateTime | Timestamp modification |
+
+**Relations:**
+- ManyToOne: AgSession
+- OneToMany: Choices (cascade delete, ordonnées par id)
+- OneToMany: Votes (cascade delete)
+
+**Méthodes:**
+- `get_total_votes()` → Int
+- `get_results()` → Array<{choice, count, percentage}>
+- `get_other_free_texts()` → Array<String>
+
+#### Choice
+| Champ | Type | Spec |
+|-------|------|------|
+| id | UUID/Int | Primary key |
+| question_id | FK | Foreign key vers Question |
+| text | String | Texte du choix (requis) |
+| is_other | Boolean | True si accepte texte libre |
+| created_at | DateTime | Timestamp création |
+| updated_at | DateTime | Timestamp modification |
+
+**Relations:**
+- ManyToOne: Question
+
+**Scopes/Queries:**
+- `where is_other = false` → choix normaux
+- `where is_other = true` → choix "autre"
+
+#### Participant
+| Champ | Type | Spec |
+|-------|------|------|
+| id | UUID/Int | Primary key |
+| ag_session_id | FK | Foreign key vers AgSession |
+| name | String | Nom du participant (requis) |
+| token | String | URL token unique (généré automatiquement) |
+| claimed_at | DateTime | Timestamp de l'identification (nullable) |
+| created_at | DateTime | Timestamp création |
+| updated_at | DateTime | Timestamp modification |
+
+**Relations:**
+- ManyToOne: AgSession
+- OneToMany: Votes (cascade delete)
+
+**Méthodes:**
+- `has_voted_on(question)` → booléen
+- `is_claimed()` → booléen (claimed_at IS NOT NULL)
+- `claim()` → set claimed_at = now()
+
+**Constraints:**
+- token UNIQUE
+- (ag_session_id, token) UNIQUE
+
+#### Vote
+| Champ | Type | Spec |
+|-------|------|------|
+| id | UUID/Int | Primary key |
+| participant_id | FK | Foreign key vers Participant |
+| question_id | FK | Foreign key vers Question |
+| choice_id | FK | Foreign key vers Choice |
+| free_text | String | Texte libre saisi (nullable, requis si choice.is_other=true) |
+| created_at | DateTime | Timestamp création |
+| updated_at | DateTime | Timestamp modification |
+
+**Relations:**
+- ManyToOne: Participant
+- ManyToOne: Question
+- ManyToOne: Choice
+
+**Constraints:**
+- UNIQUE (participant_id, question_id) - un vote par participant par question
+- FOREIGN KEY choice.question_id = question_id (intégrité référentielle)
+- Validation: free_text IS NOT NULL si choice.is_other = true
 
 ## Fonctionnalités Participant
 
@@ -85,9 +139,8 @@ AG-Voter est une application Rails 8 permettant à un administrateur de créer d
 - **Interface:**
   - Horloge animée ⏳ avec spinner
   - Message: "La session {name} n'a pas encore commencé"
-  - Jeu 2048 intégré pour divertissement
   - Message en attente du démarrage
-- **Mise à jour temps réel:** Turbo Streams reçoit les broadcasts de `session_status_{session_id}`
+- **Mise à jour temps réel:** WebSocket reçoit les broadcasts via canal `session_status_{session_id}`
 
 ### Interface de vote (Voting Area)
 - **Affichage:** Quand la session est `active`
@@ -95,7 +148,7 @@ AG-Voter est une application Rails 8 permettant à un administrateur de créer d
   - En haut: Nom de la session + Bonjour {participant}
   - Zone de vote avec la question active
   - Historique des questions clôturées (seulement leurs résultats)
-- **Mise à jour temps réel:** Turbo Streams reçoit les updates de `voting_{participant_token}`
+- **Mise à jour temps réel:** WebSocket reçoit les updates de `voting_{participant_token}`
 
 ### Question active
 - **Affichage:**
@@ -183,181 +236,367 @@ AG-Voter est une application Rails 8 permettant à un administrateur de créer d
   - Nom de la question
   - Nombre de votes actuels / nombre de participants
   - Badge de statut (En attente / En cours / Clôturée)
-- **Mise à jour temps réel:** Turbo Streams reçoit les updates de `admin_session_{session_id}`
+- **Mise à jour temps réel:** WebSocket reçoit les updates de `admin_session_{session_id}`
 
-## Fonctionnalités Temps Réel (Turbo Streams)
+## Temps Réel (WebSocket)
 
-### Canaux d'Action Cable
+Les mises à jour en temps réel utilisent WebSocket. Implémentation possible:
+- WebSocket natif (Socket.io, ws)
+- Server-Sent Events (SSE) comme fallback
+- GraphQL subscriptions
 
-**1. Participants qui voient la question changer**
-- **Canal:** `voting_{participant_token}`
-- **Déclencheurs:**
-  - Admin active une question → broadcast `replace` de `voting_area`
-  - Admin clôture une question → broadcast `replace` de `voting_area`
-- **Contenu:** Partial `voting/_voting_area` avec les variables:
-  - `active_question`
-  - `already_voted`
-  - `closed_questions`
-  - `session`
-  - `participant`
+### Canaux WebSocket
 
-**2. Participant voit la transition waiting room → voting area**
-- **Canal:** `session_status_{session_id}`
-- **Déclencheur:** Admin ouvre la session (`open` action)
-- **Contenu:** Broadcast `replace` du partial `voting/_voting_area`
-  - Remplace la salle d'attente
-  - Affiche la première question (ou "En attente du prochain vote...")
+#### 1. Canal: `voting_{participant_token}`
+**Utilisateurs:** Participants de la session
 
-**3. Admin voit les votes s'incrémenter**
-- **Canal:** `admin_session_{session_id}`
-- **Déclencheur:** Un participant vote (via `broadcast_vote_count` dans `VotingController#create`)
-- **Contenu:** Broadcast `replace` du partial `admin/questions/_vote_count`
-  - ID cible: `question_{question_id}_vote_count`
-  - Affiche le nombre de votes actuel
-
-## Jeu 2048 en Salle d'Attente
-
-### Intégration
-- **Emplacement:** Dans le partial `voting/_waiting_room.html.erb`
-- **Affichage:** Sur mobile et desktop
-
-### Mécaniques
-- **Plateau:** 4×4
-- **Tuiles:** Valeurs 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048+
-- **Spawn:** Nouvelles tuiles (90% = 2, 10% = 4) à chaque coup
-
-### Contrôles
-- **Desktop:** Flèches clavier (↑ ↓ ← →)
-- **Mobile:**
-  - Swipe (gestures) - seuil 30px pour éviter les faux positifs
-  - Boutons fléchés visuels (fallback pour Chrome Android)
-- **Reset:** Bouton "Nouveau jeu"
-
-### Score
-- **Calcul:** +valeur_tuile à chaque fusion
-- **Affichage:** En temps réel sous les contrôles
-
-### Responsive
-- **Desktop (>768px):** Plateau 280×280px
-- **Tablette/Mobile (≤768px):** Plateau 240×240px
-- **Petit mobile (≤480px):** Plateau 200×200px
-
-## Routes
-
-### Routes Publiques (Participants)
-```
-GET  /ag/:session_token                          → Identification#show (page d'identification)
-POST /ag/:session_token/claim                    → Identification#claim
-GET  /vote/:session_token/:participant_token     → Voting#show (salle attente ou vote)
-POST /vote/:session_token/:participant_token     → Voting#create (soumettre un vote)
+**Messages:**
+```json
+{
+  "type": "replace_voting_area",
+  "data": {
+    "active_question": { /* Question object ou null */ },
+    "already_voted": boolean,
+    "closed_questions": [ /* Array<Question> */ ],
+    "session": { /* Session object */ },
+    "participant": { /* Participant object */ }
+  }
+}
 ```
 
-### Routes Admin
-```
-GET    /admin/login                              → Admin::Sessions#new
-POST   /admin/login                              → Admin::Sessions#create
-DELETE /admin/logout                             → Admin::Sessions#destroy
+**Déclencheurs:**
+- Admin active une question (PATCH /admin/.../questions/{id}/activate)
+- Admin clôture une question (PATCH /admin/.../questions/{id}/close)
+- Admin ouvre la session (PATCH /admin/.../open)
 
-GET    /admin                                    → Admin::AgSessions#index
-GET    /admin/ag_sessions/new                    → Admin::AgSessions#new
-POST   /admin/ag_sessions                        → Admin::AgSessions#create
-GET    /admin/ag_sessions/:id                    → Admin::AgSessions#show
-GET    /admin/ag_sessions/:id/edit               → Admin::AgSessions#edit
-PATCH  /admin/ag_sessions/:id                    → Admin::AgSessions#update
-DELETE /admin/ag_sessions/:id                    → Admin::AgSessions#destroy
-PATCH  /admin/ag_sessions/:id/open               → Admin::AgSessions#open
-PATCH  /admin/ag_sessions/:id/close              → Admin::AgSessions#close
+#### 2. Canal: `session_status_{session_id}`
+**Utilisateurs:** Participants en salle d'attente
 
-POST   /admin/ag_sessions/:id/participants       → Admin::Participants#create
-DELETE /admin/ag_sessions/:id/participants/:id   → Admin::Participants#destroy
-PATCH  /admin/ag_sessions/:id/participants/:id/unclaim → Admin::Participants#unclaim
-
-GET    /admin/ag_sessions/:id/questions          → Admin::Questions#index
-GET    /admin/ag_sessions/:id/questions/new      → Admin::Questions#new
-POST   /admin/ag_sessions/:id/questions          → Admin::Questions#create
-GET    /admin/ag_sessions/:id/questions/:id/edit → Admin::Questions#edit
-PATCH  /admin/ag_sessions/:id/questions/:id      → Admin::Questions#update
-DELETE /admin/ag_sessions/:id/questions/:id      → Admin::Questions#destroy
-PATCH  /admin/ag_sessions/:id/questions/:id/activate → Admin::Questions#activate
-PATCH  /admin/ag_sessions/:id/questions/:id/close    → Admin::Questions#close
+**Messages:**
+```json
+{
+  "type": "replace_waiting_room",
+  "data": {
+    "session_status": "active",
+    "active_question": { /* Question object */ }
+  }
+}
 ```
 
-## Stack Technologique
+**Déclencheur:**
+- Admin ouvre la session (status: pending → active)
+- Remplace la salle d'attente par l'interface de vote
 
-### Framework & Core
-- **Rails:** 8.1.1
-- **Ruby:** 3.4+
-- **Database:** SQLite3 (2.1+)
-- **Server:** Puma (5.0+)
+#### 3. Canal: `admin_session_{session_id}`
+**Utilisateurs:** Administrateurs
+
+**Messages:**
+```json
+{
+  "type": "update_vote_count",
+  "data": {
+    "question_id": "...",
+    "vote_count": 5,
+    "participant_count": 10
+  }
+}
+```
+
+**Déclencheur:**
+- Un participant soumet un vote (POST /vote/.../...
+
+## API Endpoints
+
+### Endpoints Publiques (Participants)
+
+#### Identification page
+```
+GET /ag/{session_token}
+Response: HTML page avec liste des participants et formulaire d'ajout
+- Affiche: nom session, liste participants, formulaires
+- Pas d'authentification requise
+```
+
+#### Rejoindre une session
+```
+POST /ag/{session_token}/claim
+Body: { "name": "John Doe" }
+Response: { "participant_token": "xyz...", "participant_id": "..." }
+- Crée un nouveau Participant
+- Génère un token unique
+- Redirect vers /vote/{session_token}/{participant_token}
+```
+
+#### Quitter (unclaim)
+```
+PATCH /ag/{session_token}/{participant_token}/unclaim
+Response: { "success": true }
+- Set claimed_at = NULL
+- Permet de rejoindre à nouveau plus tard
+```
+
+#### Page de vote
+```
+GET /vote/{session_token}/{participant_token}
+Response: HTML page
+- Si session.status != 'active': affiche salle d'attente
+- Si session.status == 'active': affiche question active + historique
+- Inclut WebSocket connection channel: voting_{participant_token}
+```
+
+#### Soumettre un vote
+```
+POST /vote/{session_token}/{participant_token}
+Body: { "choice_id": "...", "free_text": "..." }
+Response: { "success": true } ou { "errors": [...] }
+- Validation: session.status == 'active'
+- Validation: no existing vote for (participant, question)
+- Validation: free_text required si choice.is_other = true
+- Broadcast via WebSocket: vote_count pour admin
+```
+
+### Endpoints Admin
+
+#### Authentification
+```
+GET /admin/login
+Response: HTML page avec formulaire login
+
+POST /admin/login
+Body: { "password": "..." }
+Response: Set-Cookie session; Redirect /admin/
+
+DELETE /admin/logout
+Response: Clear session; Redirect /
+```
+
+#### Dashboard sessions
+```
+GET /admin/
+Response: HTML page
+- Affiche: liste de toutes les sessions (triées récentes d'abord)
+- Actions: View, Edit, Open, Close, Delete
+```
+
+#### CRUD Sessions
+```
+GET /admin/ag_sessions/new
+Response: HTML formulaire création session
+
+POST /admin/ag_sessions
+Body: { "name": "..." }
+Response: { "id": "...", "token": "...", "status": "pending" }
+
+GET /admin/ag_sessions/{id}
+Response: HTML page détails
+- Affiche: infos session, liste participants, liste questions
+- Affiche: vote count live pour question active
+- WebSocket channel: admin_session_{session_id}
+
+GET /admin/ag_sessions/{id}/edit
+Response: HTML formulaire édition
+
+PATCH /admin/ag_sessions/{id}
+Body: { "name": "..." }
+Response: { "success": true }
+
+DELETE /admin/ag_sessions/{id}
+Response: { "success": true }
+
+PATCH /admin/ag_sessions/{id}/open
+Response: { "status": "active" }
+- Change status pending → active
+- Broadcast: voting_area à tous les participants via canal session_status_{id}
+
+PATCH /admin/ag_sessions/{id}/close
+Response: { "status": "closed" }
+- Change status active → closed
+```
+
+#### Gestion participants
+```
+POST /admin/ag_sessions/{id}/participants
+Body: { "name": "..." }
+Response: { "participant_id": "...", "token": "..." }
+- Crée participant, génère token
+
+DELETE /admin/ag_sessions/{id}/participants/{participant_id}
+Response: { "success": true }
+- Supprime participant et votes associés
+
+PATCH /admin/ag_sessions/{id}/participants/{participant_id}/unclaim
+Response: { "success": true }
+- Set claimed_at = NULL
+```
+
+#### Gestion questions
+```
+GET /admin/ag_sessions/{id}/questions
+Response: HTML page
+- Affiche: toutes les questions avec actions
+
+POST /admin/ag_sessions/{id}/questions
+Body: {
+  "text": "...",
+  "position": 1,
+  "choices": [
+    { "text": "Yes", "is_other": false },
+    { "text": "Other", "is_other": true }
+  ]
+}
+Response: { "id": "...", "status": "pending" }
+
+GET /admin/ag_sessions/{id}/questions/{question_id}/edit
+Response: HTML formulaire édition
+
+PATCH /admin/ag_sessions/{id}/questions/{question_id}
+Body: { "text": "...", "position": 1, "choices": [...] }
+Response: { "success": true }
+- Validation: status != 'active' pour éditer
+
+DELETE /admin/ag_sessions/{id}/questions/{question_id}
+Response: { "success": true }
+- Validation: status != 'active' pour supprimer
+
+PATCH /admin/ag_sessions/{id}/questions/{question_id}/activate
+Response: { "status": "active" }
+- Change status pending → active
+- Ferme toutes autres questions actives (status pending → closed)
+- Broadcast: voting_area à tous les participants via canal voting_{participant_token}
+
+PATCH /admin/ag_sessions/{id}/questions/{question_id}/close
+Response: { "status": "closed" }
+- Change status active → closed
+- Broadcast: voting_area à tous les participants (affiche "En attente du prochain vote...")
+```
+
+## Stack Technologique (recommandé)
+
+### Backend Options
+- **Rails 8:** Ruby + ActiveRecord (implémentation actuelle)
+- **Symfony 7:** PHP + Doctrine
+- **Django 5:** Python + ORM
+- **FastAPI:** Python + SQLAlchemy
+- **Node.js:** Express/Fastify + TypeORM/Prisma
+- **Go:** Gin/Echo + GORM
+
+### Bases de données
+- SQLite3 (développement)
+- PostgreSQL (production recommandé)
+- MySQL (alternatif)
 
 ### Frontend
-- **Hotwire Turbo:** Page transitions sans reload, Turbo Frames pour lazy loading
-- **Hotwire Stimulus:** Contrôleurs JavaScript pour interactions
-- **ImportMap Rails:** Gestion ES modules
-- **CSS:** Inline styles (pas de framework)
+- HTML5 (template engine du framework)
+- CSS3 (responsive, breakpoints 768px et 480px)
+- Vanilla JavaScript (ES6+)
+  - WebSocket natif ou ws library
+  - Fetch API pour requêtes HTTP
+  - Pas de dépendance frontend majeure
 
-### Temps Réel
-- **Action Cable:** WebSocket pour Turbo Streams
-- **Solid Cable:** Adapateur de base de données pour ActionCable
+### WebSocket
+- **Native WebSocket API** (support navigateur moderne)
+- **Socket.io** (fallback, reconnection auto)
+- **Server-Sent Events (SSE)** (alternatif si WebSocket impossible)
 
-### Infrastructure
-- **Solid Cache:** Cache via SQLite
-- **Solid Queue:** Queue asynchrone (pour futures features)
-- **Thruster:** Compression et optimisation Puma
-- **Kamal:** Déploiement Docker
-
-### Tests
-- **Capybara:** Tests d'intégration browser
-- **Selenium WebDriver:** Driver browser
-- **MiniTest:** Framework test (inclus dans Rails)
-
-### Qualité de Code
-- **Brakeman:** Analyse sécurité
-- **Bundler Audit:** Audit des gems
-- **RuboCop Rails Omakase:** Linting/Formatting
+### Optionnel
+- **Docker:** Containerization
+- **Tests:** Framework natif du langage (Jest, pytest, RSpec, PHPUnit)
+- **Linting:** ESLint (JS), black/flake8 (Python), etc.
+- **Cache:** Redis (optionnel, pour scale)
 
 ## Sécurité
 
-- **Tokens:** URLs uniques par session/participant (SecureRandom.urlsafe_base64)
-- **CSRF:** Rails CSRF tokens (inclus par défaut)
-- **Validations:** Chaque modèle valide ses données
-- **Uniqueness:** Chaque participant ne peut voter qu'une fois par question
-- **Contrôle d'accès:** Routes admin protégées par session
+- **Tokens:** URL tokens uniques par session/participant (format: alphanumeric 16+ chars, ex: base64)
+- **CSRF Protection:** Implémentée selon framework (Rails CSRF, Django CSRF middleware, etc.)
+- **Authentification Admin:** Session HTTP + password (hash avec bcrypt/argon2)
+- **Validations:**
+  - Côté serveur: chaque model valide ses données
+  - Côté client: feedback utilisateur
+- **Autorisation:**
+  - Participants ne peuvent voter que sur sessions active
+  - Participants ne peuvent voter qu'une fois par question
+  - Admins protégés par session
+- **Intégrité référentielle:**
+  - Foreign keys avec cascade delete
+  - Validation: choice.question_id == vote.question_id
 
 ## Persistance & State
 
-- **Base de données:** SQLite3 (adhérente au projet, simple à setup)
-- **Tokens:** Générés à la création, persistés en DB
-- **Sessions:** HTTP sessions pour admin, tokens URL pour participants
-- **Action Cable:** Utilise Solid Cable (DB-backed)
+- **Base de données:**
+  - Tables: ag_sessions, questions, choices, participants, votes
+  - Indexes: token (unique), participant_id+question_id (unique)
+  - Contraintes: foreign keys, uniqueness
+- **Tokens:** Générés à création (UUID ou SecureRandom), persistés en DB
+- **Sessions HTTP:** Cookie pour admin (HttpOnly, Secure)
+- **WebSocket:** Stateless, basé sur tokens URL (pas de session requise)
 
-## Données de Test
+## Données de Test (optionnel)
 
-Fixtures fournies:
-- **Sessions:** `active_session` (status: active), `pending_session` (status: pending)
-- **Participants:** `alice` (claimed), `bob` (unclaimed), `charlie` (unclaimed sur pending_session)
-- **Questions:** `active_question`, `closed_question`
-- **Choices:** `pour`, `contre`, `autre`
-- **Votes:** Pre-populated pour certains scénarios
+Fixtures recommandées:
+- **Sessions:** 1 active, 1 pending
+- **Participants:** 3-5 par session (mix claimed/unclaimed)
+- **Questions:** 2-3 par session (mix pending/active/closed)
+- **Choices:** 3-4 par question (inclure min 1 "autre")
+- **Votes:** Pré-remplis pour certains scénarios de test
 
 ## Déploiement
 
-- **Docker:** Support via Kamal + Thruster
-- **Volumes:** SQLite3 persist à `/data`
-- **Assets:** Propshaft pour build
-- **Health check:** `/up` endpoint pour container orchestration
+### Développement local
+```bash
+1. Installer le framework et dépendances
+2. Créer base de données
+3. Lancer migrations
+4. Démarrer serveur web + WebSocket
+5. Frontend: accéder http://localhost:3000
+```
 
-## Points clés pour régénération
+### Production
+- Base de données: PostgreSQL recommandé
+- Server web: framework-natif (Puma, Gunicorn, etc.)
+- WebSocket: spécifique au framework (Action Cable, Channels, etc.)
+- Reverse proxy: Nginx/Apache (SSL, compression, static files)
+- Container: Docker optionnel
+- CI/CD: GitHub Actions, GitLab CI, etc.
 
-Pour régénérer ce projet à l'identique:
+## Points clés pour régénération à l'identique
 
-1. Rails 8.1 nouveau projet
-2. Installer gems (Turbo, Stimulus, Solid*, Kamal, Thruster)
+Checklist pour recréer le projet:
+
+### Setup initial
+1. Créer nouveau projet avec le framework choisi
+2. Configurer base de données (schema ci-dessus)
 3. Générer models: AgSession, Question, Choice, Participant, Vote
-4. Associations et validations selon spec ci-dessus
-5. Routes selon liste ci-dessus
-6. Contrôleurs et vues (considérer les Turbo Streams)
-7. Ajouter Turbo Streams broadcasts dans les controllers
-8. Css inline pour responsive (breakpoints 768px et 480px)
-9. Jeu 2048 en JavaScript pur (pas de gem)
-10. Tests d'intégration avec fixtures
+
+### Modèles
+4. Ajouter relations (OneToMany, ManyToOne)
+5. Ajouter validations et constraints
+6. Ajouter méthodes métier (get_active_question, get_results, etc.)
+
+### Authentification
+7. Authentification admin: session HTTP + password
+8. Identification participants: token URL
+
+### API Endpoints
+9. Implémenter endpoints (voir section "API Endpoints")
+10. Validations: status checks, uniqueness, cascade delete
+
+### Frontend
+11. Pages HTML: identification, vote, admin dashboard
+12. CSS responsive: 3 breakpoints (desktop, 768px, 480px)
+13. Jeu 2048: implémentation JavaScript pur
+
+### Temps réel
+14. WebSocket: 3 canaux (voting_{token}, session_status_{id}, admin_session_{id})
+15. Broadcasts: déclencher selon actions admin
+
+### Testing
+16. Tests unitaires: models + validations
+17. Tests d'intégration: endpoints HTTP
+18. Tests WebSocket: canaux et broadcasts
+19. Tests browser: E2E voting flow
+
+### Optionnel
+20. Fixtures de test
+21. Docker setup
+22. CI/CD pipeline
+23. Documentation API (Swagger/OpenAPI)
