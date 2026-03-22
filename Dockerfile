@@ -9,6 +9,8 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.4.7
+ARG APP_VERSION=unknown
+ARG BUILD_DATE=unknown
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
@@ -57,7 +59,13 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
 
 # Final stage for app image
-FROM base
+FROM base AS final
+
+# Receive build arguments and set as environment variables for runtime
+ARG APP_VERSION
+ARG BUILD_DATE
+ENV APP_VERSION=${APP_VERSION}
+ENV BUILD_DATE=${BUILD_DATE}
 
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \

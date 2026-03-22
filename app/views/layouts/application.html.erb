@@ -33,5 +33,20 @@
     <% end %>
 
     <%= yield %>
+
+    <footer class="app-footer">
+      <%= version_info %>
+    </footer>
+
+    <style>
+      .app-footer {
+        text-align: center;
+        padding: 1rem;
+        color: #999;
+        font-size: 0.85rem;
+        border-top: 1px solid #eee;
+        margin-top: 3rem;
+      }
+    </style>
   </body>
 </html>
